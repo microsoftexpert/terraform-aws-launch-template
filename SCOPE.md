@@ -1,4 +1,4 @@
-# tf-mod-aws-launch-template — SCOPE
+# terraform-aws-launch-template — SCOPE
 
 Standalone module for a single, secure-by-default Amazon EC2 **launch template** — the
 reusable instance blueprint consumed by Auto Scaling groups, EC2 Fleet, Spot Fleet, and
@@ -17,28 +17,28 @@ Casey's (NPI / GLBA / FCA) baseline.
 
 Referenced by `id`/`arn`/`name`, never created here:
 
-- AMI — `image_id` (from `tf-mod-aws-ami`, or a public/marketplace/SSM-resolved AMI)
-- Security groups — `vpc_security_group_ids` / per-interface `security_groups` (from `tf-mod-aws-security-group`)
-- SSH key pair — `key_name` (from `tf-mod-aws-key-pair`)
-- IAM instance profile — `iam_instance_profile` (from `tf-mod-aws-iam-role`)
-- KMS CMK for EBS encryption — `kms_key_arn` / per-volume `kms_key_id` (from `tf-mod-aws-kms`)
-- Subnet — per-interface `subnet_id` (from `tf-mod-aws-vpc`)
-- Placement group — `placement.group_id` / `group_name` (from `tf-mod-aws-placement-group`)
-- Capacity reservation — `capacity_reservation_specification` target (from `tf-mod-aws-capacity-reservation`)
+- AMI — `image_id` (from `terraform-aws-ami`, or a public/marketplace/SSM-resolved AMI)
+- Security groups — `vpc_security_group_ids` / per-interface `security_groups` (from `terraform-aws-security-group`)
+- SSH key pair — `key_name` (from `terraform-aws-key-pair`)
+- IAM instance profile — `iam_instance_profile` (from `terraform-aws-iam-role`)
+- KMS CMK for EBS encryption — `kms_key_arn` / per-volume `kms_key_id` (from `terraform-aws-kms`)
+- Subnet — per-interface `subnet_id` (from `terraform-aws-vpc`)
+- Placement group — `placement.group_id` / `group_name` (from `terraform-aws-placement-group`)
+- Capacity reservation — `capacity_reservation_specification` target (from `terraform-aws-capacity-reservation`)
 - License configurations — `license_specification_arns` (License Manager)
-- Consuming compute — `tf-mod-aws-autoscaling-group`, EC2/Spot Fleet, `aws_instance`
+- Consuming compute — `terraform-aws-autoscaling-group`, EC2/Spot Fleet, `aws_instance`
 
 ## Consumes
 
 | Input | Type | Source module |
 |---|---|---|
-| `image_id` | `string` (AMI id / `resolve:ssm:`) | `tf-mod-aws-ami` |
-| `vpc_security_group_ids` | `list(string)` (SG ids) | `tf-mod-aws-security-group` |
-| `iam_instance_profile` | `object({arn, name})` | `tf-mod-aws-iam-role` |
-| `kms_key_arn` | `string` (KMS key ARN/alias/id) | `tf-mod-aws-kms` |
-| `key_name` | `string` (key pair name) | `tf-mod-aws-key-pair` |
-| `network_interfaces[*].subnet_id` | `string` (subnet id) | `tf-mod-aws-vpc` |
-| `placement.group_id` / `group_name` | `string` | `tf-mod-aws-placement-group` |
+| `image_id` | `string` (AMI id / `resolve:ssm:`) | `terraform-aws-ami` |
+| `vpc_security_group_ids` | `list(string)` (SG ids) | `terraform-aws-security-group` |
+| `iam_instance_profile` | `object({arn, name})` | `terraform-aws-iam-role` |
+| `kms_key_arn` | `string` (KMS key ARN/alias/id) | `terraform-aws-kms` |
+| `key_name` | `string` (key pair name) | `terraform-aws-key-pair` |
+| `network_interfaces[*].subnet_id` | `string` (subnet id) | `terraform-aws-vpc` |
+| `placement.group_id` / `group_name` | `string` | `terraform-aws-placement-group` |
 
 ## Required IAM permissions
 
@@ -78,7 +78,7 @@ instance spec — it never calls `RunInstances` — so the action set is narrow.
 
 | Output | Description | Consumed by |
 |---|---|---|
-| `id` | Launch template id (`lt-...`) — **primary** | `tf-mod-aws-autoscaling-group`, EC2/Spot Fleet, `aws_instance` |
+| `id` | Launch template id (`lt-...`) — **primary** | `terraform-aws-autoscaling-group`, EC2/Spot Fleet, `aws_instance` |
 | `arn` | Launch template ARN — **primary**, cross-resource reference type | IAM policies, resource-level `ec2:RunInstances` conditions |
 | `name` | Template name (explicit/prefix/auto) | ASG/fleet references by name |
 | `latest_version` | Latest version number (increments per change) | Consumers pinning a specific revision |

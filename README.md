@@ -39,17 +39,17 @@ Whether it's a star, a professional connection, or a coffee, every gesture helps
 
 ## 🗺️ Where this fits in the family
 
-`tf-mod-aws-launch-template` is a **compute-blueprint hub** — it consumes AMI, security-group, key-pair, IAM-role, and KMS references from sibling modules and is, in turn, consumed by anything that launches instances from it.
+`terraform-aws-launch-template` is a **compute-blueprint hub** — it consumes AMI, security-group, key-pair, IAM-role, and KMS references from sibling modules and is, in turn, consumed by anything that launches instances from it.
 
 ```mermaid
 flowchart LR
- AMI["tf-mod-aws-ami<br/>(image_id)"]
- SG["tf-mod-aws-security-group<br/>(SG ids)"]
- KEY["tf-mod-aws-key-pair<br/>(key_name)"]
- IAM["tf-mod-aws-iam-role<br/>(instance profile)"]
- KMS["tf-mod-aws-kms<br/>(EBS CMK)"]
- THIS["tf-mod-aws-launch-template<br/>(THIS MODULE)"]
- ASG["tf-mod-aws-autoscaling-group"]
+ AMI["terraform-aws-ami<br/>(image_id)"]
+ SG["terraform-aws-security-group<br/>(SG ids)"]
+ KEY["terraform-aws-key-pair<br/>(key_name)"]
+ IAM["terraform-aws-iam-role<br/>(instance profile)"]
+ KMS["terraform-aws-kms<br/>(EBS CMK)"]
+ THIS["terraform-aws-launch-template<br/>(THIS MODULE)"]
+ ASG["terraform-aws-autoscaling-group"]
 
  AMI -->|"image_id"| THIS
  SG -->|"vpc_security_group_ids"| THIS
@@ -61,7 +61,7 @@ flowchart LR
  style THIS fill:#FF9900,color:#fff,stroke:#cc7a00,stroke-width:2px
 ```
 
-This module **consumes** AMI, security-group, key-pair, IAM-role, KMS, subnet, and placement-group references (from their respective `tf-mod-aws-*` modules); it **emits** `id` / `arn` / `name` for `tf-mod-aws-autoscaling-group`, EC2/Spot Fleet, and `aws_instance` — see the [Typical wiring](#-typical-wiring) table.
+This module **consumes** AMI, security-group, key-pair, IAM-role, KMS, subnet, and placement-group references (from their respective `terraform-aws-*` modules); it **emits** `id` / `arn` / `name` for `terraform-aws-autoscaling-group`, EC2/Spot Fleet, and `aws_instance` — see the [Typical wiring](#-typical-wiring) table.
 
 ---
 
@@ -71,7 +71,7 @@ A single `aws_launch_template.this` keystone whose optional child collections (`
 
 ```mermaid
 flowchart TD
- subgraph mod["tf-mod-aws-launch-template"]
+ subgraph mod["terraform-aws-launch-template"]
  THIS["aws_launch_template.this<br/>(keystone)<br/>IMDSv2-enforced instance blueprint"]
  BDM["block_device_mappings<br/>(for_each map) — ebs encrypted by default"]
  NIC["network_interfaces<br/>(for_each map)"]
@@ -99,7 +99,7 @@ flowchart TD
 ## 📁 Module Structure
 
 ```text
-tf-mod-aws-launch-template/
+terraform-aws-launch-template/
 ├── providers.tf # required_providers (aws >= 6.0, < 7.0); no provider {} block
 ├── variables.tf # deeply-typed inputs, validation, secure defaults
 ├── main.tf # aws_launch_template.this + tag-propagation locals
@@ -116,19 +116,19 @@ Smallest working call, wiring upstream modules:
 
 ```hcl
 module "app_launch_template" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
 
   name          = "app-tier"
-  image_id      = module.app_ami.id # from tf-mod-aws-ami
+  image_id      = module.app_ami.id # from terraform-aws-ami
   instance_type = "m6i.large"
 
-  vpc_security_group_ids = [module.app_sg.id] # from tf-mod-aws-security-group
+  vpc_security_group_ids = [module.app_sg.id] # from terraform-aws-security-group
 
   iam_instance_profile = {
-    arn = module.app_role.instance_profile_arn # from tf-mod-aws-iam-role
+    arn = module.app_role.instance_profile_arn # from terraform-aws-iam-role
   }
 
-  kms_key_arn = module.ebs_cmk.arn # from tf-mod-aws-kms
+  kms_key_arn = module.ebs_cmk.arn # from terraform-aws-kms
 
   block_device_mappings = {
     root = {
@@ -189,8 +189,8 @@ How this module's outputs connect to the rest of the library — one row per out
 
 | This module output | Feeds into |
 |---|---|
-| `id` | `tf-mod-aws-autoscaling-group` (`launch_template.id`), EC2 Fleet / Spot Fleet, and `aws_instance.launch_template` references |
-| `arn` | `tf-mod-aws-iam-policy` (resource-level `ec2:RunInstances` conditions), resource-based permissions |
+| `id` | `terraform-aws-autoscaling-group` (`launch_template.id`), EC2 Fleet / Spot Fleet, and `aws_instance.launch_template` references |
+| `arn` | `terraform-aws-iam-policy` (resource-level `ec2:RunInstances` conditions), resource-based permissions |
 | `name` | ASG / fleet references that target the template by name |
 | `latest_version` | Consumers pinning to a specific revision instead of `"$Latest"` |
 | `default_version` | Consumers that reference `"$Default"` |
@@ -218,7 +218,7 @@ How this module's outputs connect to the rest of the library — one row per out
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "minimal"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "t3.micro"
@@ -233,7 +233,7 @@ module "lt" {
 # provider "aws" { default_tags { tags = { Owner = "platform", ManagedBy = "terraform" } } }
 
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "tagged"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "m6i.large"
@@ -252,12 +252,12 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "cmk-root"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "m6i.large"
 
-  kms_key_arn = module.ebs_cmk.arn # from tf-mod-aws-kms — fallback CMK for all ebs blocks
+  kms_key_arn = module.ebs_cmk.arn # from terraform-aws-kms — fallback CMK for all ebs blocks
 
   block_device_mappings = {
     root = {
@@ -276,7 +276,7 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "data-tier"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "r6i.xlarge"
@@ -307,7 +307,7 @@ module "lt" {
 # Documented exception ONLY — IMDSv1 (http_tokens = "optional") widens SSRF/credential-theft
 # exposure. baseline is IMDSv2 required. Record the exception and compensating controls.
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "legacy-imds"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "t3.medium"
@@ -326,7 +326,7 @@ module "lt" {
 # Documented exception ONLY. baseline encrypts every EBS block. Use solely for a
 # volume that legitimately cannot be encrypted (e.g. restoring from an unencrypted snapshot).
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "from-snapshot"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "m6i.large"
@@ -349,7 +349,7 @@ module "lt" {
 ```hcl
 # Mutually exclusive with instance_type. memory_mib.min and vcpu_count.min are required.
 module "lt" {
-  source   = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source   = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name     = "abis"
   image_id = "ami-0123456789abcdef0"
 
@@ -368,7 +368,7 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "spot-workers"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "c6i.large"
@@ -389,7 +389,7 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "eni-primary"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "m6i.large"
@@ -410,7 +410,7 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "observable"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "m6i.large"
@@ -429,7 +429,7 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "bootstrap"
   image_id      = "ami-0123456789abcdef0"
   instance_type = "t3.medium"
@@ -444,11 +444,11 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "ssm-ami"
   image_id      = "resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
   instance_type = "m6i.large"
-  key_name      = module.bastion_key.key_name # from tf-mod-aws-key-pair (SSM preferred otherwise)
+  key_name      = module.bastion_key.key_name # from terraform-aws-key-pair (SSM preferred otherwise)
 }
 ```
 </details>
@@ -457,7 +457,7 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source         = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source         = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name           = "template-only-tags"
   image_id       = "ami-0123456789abcdef0"
   instance_type  = "m6i.large"
@@ -476,14 +476,14 @@ module "lt" {
 
 ```hcl
 module "lt" {
-  source        = "git::https://github.com/microsoftexpert/tf-mod-aws-launch-template?ref=v1.0.0"
+  source        = "git::https://github.com/microsoftexpert/terraform-aws-launch-template?ref=v1.0.0"
   name          = "app-tier"
-  image_id      = module.app_ami.id # tf-mod-aws-ami
+  image_id      = module.app_ami.id # terraform-aws-ami
   instance_type = "m6i.large"
 
-  vpc_security_group_ids = [module.app_sg.id]                             # tf-mod-aws-security-group
-  iam_instance_profile   = { arn = module.app_role.instance_profile_arn } # tf-mod-aws-iam-role
-  kms_key_arn            = module.ebs_cmk.arn                             # tf-mod-aws-kms
+  vpc_security_group_ids = [module.app_sg.id]                             # terraform-aws-security-group
+  iam_instance_profile   = { arn = module.app_role.instance_profile_arn } # terraform-aws-iam-role
+  kms_key_arn            = module.ebs_cmk.arn                             # terraform-aws-kms
 
   block_device_mappings = {
     root = { device_name = "/dev/xvda", ebs = { volume_size = 50 } }
@@ -493,13 +493,13 @@ module "lt" {
 }
 
 module "asg" {
-  source = "git::https://github.com/microsoftexpert/tf-mod-aws-autoscaling-group?ref=v1.0.0"
+  source = "git::https://github.com/microsoftexpert/terraform-aws-autoscaling-group?ref=v1.0.0"
   #...
   launch_template = {
     id      = module.lt.id
     version = "$Latest"
   }
-  vpc_zone_identifier = module.vpc.private_subnet_ids # tf-mod-aws-vpc
+  vpc_zone_identifier = module.vpc.private_subnet_ids # terraform-aws-vpc
 }
 ```
 </details>
@@ -615,7 +615,7 @@ tags_all = {
 - Amazon EC2 Auto Scaling User Guide — Launch templates and versioning
 - Amazon EC2 User Guide — Instance metadata and IMDSv2
 - AWS KMS Developer Guide — EBS encryption and grants
-- Sibling modules — `tf-mod-aws-ami`, `tf-mod-aws-security-group`, `tf-mod-aws-iam-role`, `tf-mod-aws-kms`, `tf-mod-aws-key-pair`, `tf-mod-aws-autoscaling-group`, `tf-mod-aws-vpc`
+- Sibling modules — `terraform-aws-ami`, `terraform-aws-security-group`, `terraform-aws-iam-role`, `terraform-aws-kms`, `terraform-aws-key-pair`, `terraform-aws-autoscaling-group`, `terraform-aws-vpc`
 
 ---
 
